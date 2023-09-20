@@ -1,24 +1,26 @@
-
+import java.io.File
 
 fun main(args: Array<String>) {
-    val lenparse = args.size
+    var input =  mutableListOf<String>()
     val ListFlag = arrayOf("-f", "-r", "-u", "-V", "-o")
-    val ListOfType = arrayOf("")
-    val ListOfFiles = arrayOf("")
+    var ListOfType = mutableListOf("")
+    var ListOfFiles = mutableListOf("")
 
     for(arg in args){
-        if (arg in ListFlag){
-            println(arg)
-            ListOfType+arg
+        if (!(arg  in ListFlag)){
+            ListOfFiles.add(ListOfFiles.size, arg)
+            File(arg).useLines { lines -> lines.forEach { input.add(it) }}
         }
+
         else{
-            ListOfFiles+arg
+            ListOfType.add(ListOfType.size, arg)
+            for(type in ListOfType){
+                if(type == "-f"){
+                    for(str in input){
+                        println(str.toLowerCase())
+                    }
+                }
+            }
         }
-    }
-    for(i in ListOfType){
-        println(i)
-    }
-    for(j in ListOfFiles){
-        println(j)
     }
 }
