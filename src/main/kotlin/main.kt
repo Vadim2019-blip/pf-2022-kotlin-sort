@@ -8,6 +8,7 @@ fun main(args: Array<String>) {
 
     for(arg in args){
         if (arg in ListFlag){
+            println(arg)
             ListOfType+arg
         }
         else{
@@ -17,7 +18,7 @@ fun main(args: Array<String>) {
     for(i in ListOfType){
         println(i)
     }
-    for(j in ListOfType){
+    for(j in ListOfFiles){
         println(j)
     }
 }
