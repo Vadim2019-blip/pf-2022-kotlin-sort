@@ -23,6 +23,7 @@ fun main(args: Array<String>) {
     var count = 0
     var flag = false
     var flag_o = false
+    var flag_f = false
 
     for (arg in args) {
         if (!(arg in ListFlag)) {
@@ -50,13 +51,30 @@ fun main(args: Array<String>) {
             if(type == "-o"){
                 flag_o = true
             }
+            if(type == "-f"){
+                flag = true
+            }
             if(type == "-n"){
                 TODO()
             }
         }
-        input.sort()
+        if(flag_f){
+            input.sortBy{it.toLowerCase()}
+        }
+        else{
+            input.sort()
+        }
         if(flag_o) {
-            File(args[ListOfIndexFiles[i]]).writeText(input.toString(),Charsets.UTF_8)
+            var count1 = 0
+            for(str in input) {
+                if (count1 == 0) {
+                    File(args[ListOfIndexFiles[i]]).writeText((str).toString(), Charsets.UTF_8)
+                }
+                else {
+                    File(args[ListOfIndexFiles[i]]).appendText(("\n" + str).toString(), Charsets.UTF_8)
+                }
+                count1 += 1
+            }
         }
         else {
             if (flag == false) {
@@ -66,6 +84,8 @@ fun main(args: Array<String>) {
             }
         }
         input.clear()
+        flag = false
         flag_o = false
+        flag_f = false
     }
 }
