@@ -1,5 +1,5 @@
 import java.io.File
-
+import java.util.*
 /*
 -------------------------------------------------------------------
 Утилита сорт.
@@ -9,9 +9,9 @@ import java.io.File
 1.1) Поддерживается формат, когда к файлу можно применить несколько флагов, однако лучше к файлу применять ровно один флаг а затем писать -o
 2)
 Поддерживаемые флаги:
--f, -n, -o, -r, -random
-2.1) Флаг -max не поддерживает функцию изменения файла, тк это бессмысленно, ведь соддержание файла пропадет
-
+-f, -n, -o, -r, -random, -numberanalis, -V
+2.1) Флаг -V поддерживает сортировку по трем точкам. Если точек больше, то ошибки тоже не будет, однако результат сортировки может быть не таким каким нужно
+2.2) Флаг -numberanalis создан в качестве дополнение к флагу -n, он служит для вывода информации о числах в файле, для удобства ввыводит в окно Run, ведь если бы он записывал в файл, то потом было бы трудно применять другие флаги
 3) Примеры ввода данных:
 input -f file -f -o -r -u number -n endinput
 input -f -r file -f number -n endinput
@@ -19,6 +19,7 @@ input -f -r file -f number -n endinput
 5) флаг -random можно использовать только без других флагов
 6) Названия файлов не могут начинаться на -
 7) Флаг -random простой, но очень полезный, благодаря нему можно не вбивать данные в файл после сортировки
+
 -------------------------------------------------------------------
 */
 
@@ -34,6 +35,72 @@ fun isNumber(a: String): Boolean {
     return flag
 }
 
+
+/*Просто функция для удобства: поменять местами два элемента массива */
+fun <T> swap(list: MutableList<T>, i: Int, j: Int) {
+    val t = list[i]
+    list[i] = list[j]
+    list[j] = t
+}
+
+
+/*Функция проверяющая является ли строка версиией*/
+fun isversions(string1: String): Boolean {
+    var ans = true
+    var pointindex = mutableListOf<Int>()
+    pointindex.add(-1)
+    for (j in 0..string1.length - 1) {
+        if (string1[j] == '.') {
+            pointindex.add(j)
+        }
+    }
+    for (i in 1..pointindex.size - 1) {
+        var curr1 = string1.substring(pointindex[i - 1] + 1, pointindex[i])
+        if (!isNumber(curr1)) {
+            ans = false
+            break
+        }
+    }
+    var currlast: String
+    if(pointindex[pointindex.size - 1] != string1.length - 1){
+        currlast = string1.substring(pointindex[pointindex.size - 1] + 1, string1.length)
+    }
+    else{
+        currlast = "aaaa"
+    }
+    if(pointindex.size == 1){
+        return false
+    }
+    else if(!isNumber(currlast)){
+        return false
+    }
+    else{
+        return ans
+    }
+}
+
+
+/* Функция, которая по версии возвращает число, аналогично семинару про айпи: разделяется по точкам и начиная с конца умножается на 256 */
+fun ParsVers(string1: String): Int{
+    var indexpoint = mutableListOf<Int>()
+    var ans = 0
+    indexpoint.add(-1)
+    for(i in 0 until string1.length){
+        if(string1[i] == '.'){
+            indexpoint.add(i)
+        }
+    }
+    var count = 4096 * 4096
+    for(i in 1 until indexpoint.size){
+        ans += string1.substring(indexpoint[i - 1] + 1, indexpoint[i]).toInt() * count
+        count /= 256
+    }
+    ans  += string1.substring(indexpoint[indexpoint.size - 1] + 1, string1.length).toInt()
+    return ans
+}
+
+
+
 /* Функция для проверки существования Файла в системе, что бы программа не падала*/
 fun isFileExists(file: File): Boolean {
     return file.exists() && !file.isDirectory
@@ -42,7 +109,6 @@ fun isFileExists(file: File): Boolean {
 fun main(args: Array<String>) {
 
     var input = mutableListOf<String>()
-    val ListFlag = arrayOf("-f", "-r", "-u", "-V", "-o")
 
     var ListOfIndexFiles = mutableListOf(0)
     var count = 0
@@ -51,8 +117,9 @@ fun main(args: Array<String>) {
     var flag_o = false
     var flag_r = false
     var flag_n  = false
-    var flag_max = false
+    var flag_numberanalis = false
     var flag_random = false
+    var flag_V = false
 
     /*Список со всеми индексами, потом мы будем удалять из него те, которые не являются названием файла*/
     for(i in 0..args.size -1){
@@ -65,6 +132,7 @@ fun main(args: Array<String>) {
         }
         count += 1
     }
+
     /* начинаем работу основную работу: применение к файлам флагов*/
     for(i in 0..ListOfIndexFiles.size - 2){
         /* проверяем существование данного файла*/
@@ -96,8 +164,11 @@ fun main(args: Array<String>) {
             else if(type == "-random"){
                 flag_random = true
             }
-            else if(type == "-max"){
-                flag_max = true
+            else if(type == "-numberanalis"){
+                flag_numberanalis = true
+            }
+            else if(type == "-V"){
+                flag_V = true
             }
             else{
                 println("$type программа не поддерживает такой флаг")
@@ -108,9 +179,6 @@ fun main(args: Array<String>) {
             input.sortWith(String.CASE_INSENSITIVE_ORDER)
         }
         else input.sort()
-        if (flag_max){
-            println(input[0])
-        }
         if(flag_n){
             var inputcopy = mutableListOf<Int>()
             var inputcopy2 = mutableListOf<String>()
@@ -130,6 +198,23 @@ fun main(args: Array<String>) {
             else {
                 input.clear()
                 inputcopy.sort()
+                if (flag_numberanalis){
+                    var sum = 0
+                    var min = inputcopy[0]
+                    var median: Int
+                    if((inputcopy.size - 1) % 2 == 0){
+                        median = inputcopy[(inputcopy.size - 1)/2]
+                    }
+                    else{
+                        median =  inputcopy[(inputcopy.size)/2]
+                    }
+                    var max = inputcopy[inputcopy.size -1]
+                    for(i in 0..inputcopy.size -1) {
+                        sum += inputcopy[i]
+                    }
+                    var mean = sum/inputcopy.size
+                    println("Максимум: $max , Минимум: $min, Медиана: $median, Сумма: $sum, Среднее: $mean")
+                }
                 inputcopy2.sort()
                 for (i in 0..inputcopy.size - 1) {
                     input.add(inputcopy[i].toString())
@@ -145,14 +230,40 @@ fun main(args: Array<String>) {
         if(flag_random){
             input.shuffle()
         }
+        if(flag_V){
+            var versions = mutableListOf<String>()
+            var notversion = mutableListOf<String>()
+            for(i in 0..input.size - 1){
+                if(isversions(input[i])){
+                    versions.add(input[i])
+                }
+                else{
+                    notversion.add(input[i])
+                }
+            }
+            for(i in 0 until versions.size){
+                for(j in i + 1 until versions.size){
+                    if(ParsVers(versions[i]) < ParsVers(versions[j])){
+                        swap(versions, i, j)
+                    }
+                }
+            }
+            input.clear()
+            for(i in 0..versions.size - 1){
+                input.add(versions[i])
+            }
+            for(i in 0..notversion.size - 1){
+                input.add(notversion[i])
+            }
+        }
         if(flag_o) {
             var count1 = 0
             for(str in input) {
                 if (count1 == 0) {
-                    File(args[ListOfIndexFiles[i]]).writeText((str).toString(), Charsets.UTF_8)
+                    File(args[ListOfIndexFiles[i]]).writeText((str), Charsets.UTF_8)
                 }
                 else {
-                    File(args[ListOfIndexFiles[i]]).appendText(("\n" + str).toString(), Charsets.UTF_8)
+                    File(args[ListOfIndexFiles[i]]).appendText(("\n" + str), Charsets.UTF_8)
                 }
                 count1 += 1
             }
@@ -166,5 +277,7 @@ fun main(args: Array<String>) {
         flag_o = false
         flag_r = false
         flag_n = false
+        flag_numberanalis = false
+        flag_V = false
     }
 }
