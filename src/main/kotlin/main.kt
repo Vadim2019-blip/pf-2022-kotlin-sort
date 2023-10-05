@@ -9,7 +9,7 @@ import java.util.*
 1.1) Поддерживается формат, когда к файлу можно применить несколько флагов, однако лучше к файлу применять ровно один флаг а затем писать -o
 2)
 Поддерживаемые флаги:
--f, -n, -o, -r, -random, -numberanalis, -V
+-f, -n, -o, -r, -u, -random, -numberanalis, -V, -ws,
 2.1) Флаг -V поддерживает сортировку по трем точкам. Если точек больше, то ошибки тоже не будет, однако результат сортировки может быть не таким каким нужно
 2.2) Флаг -numberanalis создан в качестве дополнение к флагу -n, он служит для вывода информации о числах в файле, для удобства ввыводит в окно Run, ведь если бы он записывал в файл, то потом было бы трудно применять другие флаги
 3) Примеры ввода данных:
@@ -99,7 +99,65 @@ fun ParsVers(string1: String): Int{
     return ans
 }
 
+fun flag_oSort(ListOfIndexFiles: MutableList<Int>, args: Array<String>, input: MutableList<String>, i: Int){
+    var count1 = 0
+    for(str in input) {
+        if (count1 == 0) {
+            File(args[ListOfIndexFiles[i]]).writeText((str), Charsets.UTF_8)
+        }
+        else {
+            File(args[ListOfIndexFiles[i]]).appendText(("\n" + str), Charsets.UTF_8)
+        }
+        count1 += 1
+    }
 
+}
+
+
+fun flag_VSort(input: MutableList<String>): MutableList<String>{
+    var versions = mutableListOf<String>()
+    var notversion = mutableListOf<String>()
+    for(i in 0..input.size - 1){
+        if(isversions(input[i])){
+            versions.add(input[i])
+        }
+        else{
+            notversion.add(input[i])
+        }
+    }
+    for(i in 0 until versions.size){
+        for(j in i + 1 until versions.size){
+            if(ParsVers(versions[i]) > ParsVers(versions[j])){
+                swap(versions, i, j)
+            }
+        }
+    }
+    input.clear()
+    for(i in 0..versions.size - 1){
+        input.add(versions[i])
+    }
+    for(i in 0..notversion.size - 1){
+        input.add(notversion[i])
+    }
+    return input
+}
+
+
+fun flag_rSort(input: MutableList<String>): MutableList<String>{
+    return input.asReversed()
+}
+
+
+fun flag_wsSort(input: MutableList<String>): MutableList<String>{
+    for(i in 0..input.size - 1){
+        val list = input[i].split(" ")
+        input.removeAt(i)
+        for(j in 0..list.size - 1){
+            input.add(list[j])
+        }
+    }
+    return input
+}
 
 /* Функция для проверки существования Файла в системе, что бы программа не падала*/
 fun isFileExists(file: File): Boolean {
@@ -110,7 +168,7 @@ fun main(args: Array<String>) {
 
     var input = mutableListOf<String>()
 
-    var ListOfIndexFiles = mutableListOf(0)
+    var ListOfIndexFiles = mutableListOf<Int> ()
     var count = 0
     /*создаем переменные, которые отвечают за наличие флашов*/
     var flag = false
@@ -120,6 +178,7 @@ fun main(args: Array<String>) {
     var flag_numberanalis = false
     var flag_random = false
     var flag_V = false
+    var flag_wspace = false
 
     /*Список со всеми индексами, потом мы будем удалять из него те, которые не являются названием файла*/
     for(i in 0..args.size -1){
@@ -167,14 +226,20 @@ fun main(args: Array<String>) {
             else if(type == "-numberanalis"){
                 flag_numberanalis = true
             }
-            else if(type == "-V"){
+            else if(type == "-V") {
                 flag_V = true
             }
+            else if (type == "-ws"){
+                flag_wspace = true
+                }
             else{
                 println("$type программа не поддерживает такой флаг")
             }
         }
         /*Далее идет действие применения флагов к файлам*/
+        if(flag_wspace){
+            flag_wsSort(input)
+        }
         if(flag){
             input.sortWith(String.CASE_INSENSITIVE_ORDER)
         }
@@ -225,53 +290,21 @@ fun main(args: Array<String>) {
             }
         }
         if (flag_r) {
-            input = input.asReversed()
+            flag_rSort(input)
             }
         if(flag_random){
             input.shuffle()
         }
         if(flag_V){
-            var versions = mutableListOf<String>()
-            var notversion = mutableListOf<String>()
-            for(i in 0..input.size - 1){
-                if(isversions(input[i])){
-                    versions.add(input[i])
-                }
-                else{
-                    notversion.add(input[i])
-                }
-            }
-            for(i in 0 until versions.size){
-                for(j in i + 1 until versions.size){
-                    if(ParsVers(versions[i]) < ParsVers(versions[j])){
-                        swap(versions, i, j)
-                    }
-                }
-            }
-            input.clear()
-            for(i in 0..versions.size - 1){
-                input.add(versions[i])
-            }
-            for(i in 0..notversion.size - 1){
-                input.add(notversion[i])
-            }
+            flag_VSort(input)
         }
         if(flag_o) {
-            var count1 = 0
-            for(str in input) {
-                if (count1 == 0) {
-                    File(args[ListOfIndexFiles[i]]).writeText((str), Charsets.UTF_8)
-                }
-                else {
-                    File(args[ListOfIndexFiles[i]]).appendText(("\n" + str), Charsets.UTF_8)
-                }
-                count1 += 1
-            }
+            flag_oSort(ListOfIndexFiles, args, input, i)
         }
         else {
             println(input)
         }
-        /*Последняя часть input очищаетс и переменные, отвечающие за наличие флагов стоновятся равны false*/
+        /*Последняя часть input очищает и переменные, отвечающие за наличие флагов становятся равны false*/
         input.clear()
         flag = false
         flag_o = false
@@ -279,5 +312,6 @@ fun main(args: Array<String>) {
         flag_n = false
         flag_numberanalis = false
         flag_V = false
+        flag_wspace = false
     }
 }
